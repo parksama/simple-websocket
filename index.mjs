@@ -25,8 +25,12 @@ app.get('/', (req, res) => {
 app.get('/notify', (req, res) => {
 	var user_id = req.query.user_id;
 	var message = req.query.message;
+	var from = req.query.from;
 
-	var result = io.to(user_id).emit('message', message);
+	var result = io.to(user_id).emit('message', {
+		message,
+		from
+	});
 
 	res.send(result ? 'sent' : 'failed');
 });
@@ -41,6 +45,15 @@ io.on('connection', (socket) => {
 
 	socket.on('disconnect', () => {
 		console.log('user disconnected', { user_id });
+	});
+
+	socket.on('message', ({ message, target }) => {
+		console.log('message', { user_id, message, target });
+
+		io.to(target).emit('message', {
+			message,
+			from: user_id
+		});
 	});
 });
 
